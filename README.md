@@ -1,6 +1,6 @@
 #Intel&reg; RealSense&trade; Technology - ROS Integration
 ## Supported Camera Types: R200, F200, SR300 and ZR300
-## Modified for Intel&reg; Euclid;
+## Modified for Intel&reg; Euclid
 ###Configuration:
 | Version        | Best Known (indigo)  | Best Known (kinetic) |
 |:-------------- |:---------------------|:---------------------|
