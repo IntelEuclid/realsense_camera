@@ -1,0 +1,84 @@
+<!-- Sample launch file for using RealSense ZR300 camera with default configurations -->
+<launch>
+  <arg name="manager"      value="nodelet_manager" />
+  <arg name="camera"       default="camera" />
+  <arg name="camera_type"  default="LR200M" /> <!-- Type of camera -->
+  <arg name="serial_no"    default="" />
+  <arg name="usb_port_id"  default="" /> <!-- USB "Bus#-Port#" -->
+  
+    <!-- These 'arg' tags are just place-holders for passing values from test files.
+  The recommended way is to pass the values directly into the 'param' tags. -->
+  <arg name="enable_depth"      default="true" />
+  <arg name="enable_color"      default="true" />
+  <arg name="enable_pointcloud" default="false" />
+  <arg name="enable_tf"         default="true" />
+  <arg name="mode"              default="manual" />
+  <arg name="depth_width"       default="320" />
+  <arg name="depth_height"      default="240" />
+  <arg name="color_width"       default="320" />
+  <arg name="color_height"      default="240" />
+  <arg name="depth_fps"         default="30" />
+  <arg name="color_fps"         default="30" />
+  <arg name="enable_imu"        default="true" /> 
+  <arg name="enable_fisheye"    default="true" />
+  <arg name="enable_6dof"       default="false" />
+    
+  <param name="$(arg camera)/driver/enable_depth"      type="bool" value="$(arg enable_depth)" />
+  <param name="$(arg camera)/driver/enable_color"      type="bool" value="$(arg enable_color)" />
+  <param name="$(arg camera)/driver/enable_pointcloud" type="bool" value="$(arg enable_pointcloud)" />
+  <param name="$(arg camera)/driver/enable_tf"         type="bool" value="$(arg enable_tf)" />
+  <param name="$(arg camera)/driver/mode"              type="str"  value="$(arg mode)" />
+  <param name="$(arg camera)/driver/depth_width"       type="int"  value="$(arg depth_width)" />
+  <param name="$(arg camera)/driver/depth_height"      type="int"  value="$(arg depth_height)" />
+  <param name="$(arg camera)/driver/color_width"       type="int"  value="$(arg color_width)" />
+  <param name="$(arg camera)/driver/color_height"      type="int"  value="$(arg color_height)" />
+  <param name="$(arg camera)/driver/depth_fps"         type="int"  value="$(arg depth_fps)" />
+  <param name="$(arg camera)/driver/color_fps"         type="int"  value="$(arg color_fps)" />
+  <param name="$(arg camera)/driver/enable_imu"        type="bool" value="$(arg enable_imu)" />
+  <param name="$(arg camera)/driver/enable_fisheye"    type="bool" value="$(arg enable_fisheye)" />
+  <param name="$(arg camera)/driver/enable_6dof"       type="bool" value="$(arg enable_6dof)" />
+  <!-- Refer to the README file for list of supported parameters -->
+  
+
+  <group ns="$(arg camera)">
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" output="screen"/>
+
+    <include file="$(find realsense_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="manager"      value="$(arg manager)" />
+      <arg name="camera"       value="$(arg camera)" />
+      <arg name="camera_type"  value="$(arg camera_type)" />
+      <arg name="serial_no"    value="$(arg serial_no)" />
+      <arg name="usb_port_id"  value="$(arg usb_port_id)" />
+    </include>
+
+
+    <arg name="imu"          default="imu" />
+    <node pkg="topic_tools" type="drop" name="drop" args="$(arg imu)/data_raw 5 6 $(arg imu)/drop" output="screen"/>
+
+	<arg name="color" default="false"/>
+
+	<!-- node pkg="nodelet" type="nodelet" name="standalone_pc_nodelet"  args="manager" output="screen"/ -->
+
+	<node if="$(arg color)" pkg="nodelet" type="nodelet" name="DIRegistrar"
+		args="load depth_image_proc/register $(arg manager) ">
+		<remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+		<remap from="depth/camera_info" to="/camera/depth/camera_info"/>
+		<remap from="depth/image_rect" to="/camera/depth/image_raw"/>
+	</node>
+
+	<node if="$(arg color)" pkg="nodelet" type="nodelet" name="PCCorrectorNodelet"
+		args="load depth_image_proc/point_cloud_xyzrgb $(arg manager) ">
+		<remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+		<remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
+    		<remap from="points" to="/camera/depth/points"/>
+	</node>
+
+	<node unless="$(arg color)" pkg="nodelet" type="nodelet" name="PCCorrectorNodelet"
+		args="load depth_image_proc/point_cloud_xyz $(arg manager) ">
+		<remap from="camera_info" to="/camera/depth/camera_info"/>
+		<remap from="image_rect" to="/camera/depth/image_raw"/>
+		<remap from="points" to="/camera/depth/points"/>
+	</node>
+	
+  </group>
+</launch>

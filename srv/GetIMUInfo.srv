@@ -1,0 +1,7 @@
+---
+IMUInfo accel
+IMUInfo gyro
+float64[9] depth_to_fisheye_rotation
+float64[9] fisheye_to_imu_rotation
+float64[3] fisheye_to_imu_translation
+float64[3] depth_to_fisheye_translation
